@@ -1,0 +1,31 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+*.log
+
+# PyCharm / IDEs
+.idea/
+.vscode/
+*.swp
+
+# Pipenv
+# We DO track Pipfile and Pipfile.lock, but ignore the virtualenv if created inside the project
+.venv/
+
+# OS generated files
+.DS_Store
+Thumbs.db
