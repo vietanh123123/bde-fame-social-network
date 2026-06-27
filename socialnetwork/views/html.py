@@ -123,3 +123,13 @@ def leave_community(request):
         return redirect(f"{reverse('sn:timeline')}?{query}")
     api.leave_community(user, community)
     return redirect(reverse("sn:timeline"))
+
+@require_http_methods(["GET"])
+@login_required
+def similar_users(request):
+    user = _get_social_network_user(request.user)
+    users = api.similar_users(user)
+    context = {
+        "similar_users": users,
+    }
+    return render(request, "similar_users.html", context=context)
