@@ -160,7 +160,7 @@ def submit_post(
     for area in _expertise_areas:
         expertise_area = area["expertise_area"]
         truth_rating = area["truth_rating"]
-        if truth_rating.numeric_value < 0:
+        if truth_rating is not None and truth_rating.numeric_value < 0:
             try:
                 fame = Fame.objects.get(user=user, expertise_area = expertise_area)
                 fame.fame_level = fame.fame_level.get_next_lower_fame_level()
