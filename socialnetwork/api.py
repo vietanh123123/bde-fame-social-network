@@ -127,9 +127,16 @@ def submit_post(
     redirect_to_logout = False
 
 
-    #########################
-    # add your code here
-    #########################
+    for area in _expertise_areas: #using for loop to get a value with key expertise_area from dictionary
+        expertise_area = area["expertise_area"]
+        try:
+            fame_value = Fame.objects.get(user = user, expertise_area = expertise_area) #finding fame of a user in a specific expertise area
+            if fame_value.fame_level.numeric_value <  0:
+                post.published = False
+                break
+        except Fame.DoesNotExist:
+            pass
+
 
     post.save()
 
