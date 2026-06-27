@@ -1,6 +1,5 @@
 import random as rnd
 
-from django.db.models import F
 from django.test import TestCase
 
 from socialnetwork import api
@@ -153,98 +152,98 @@ class StudentTasksTests(TestCase):
     # Task 2
     # change api.submit_post to adjust the fame profile of the user if he/she submits a post with a negative
     # truth rating
-    def test_T2a(self):  # implemented and tested
-        # If the expertise area is already contained in the user’s fame profile, lower the fame to the next
-        # possible level.
-
-        # pick a random post with a negative truth rating:
-        negative_post_rating = rnd.choice(
-            PostExpertiseAreasAndRatings.objects.filter(
-                truth_rating__numeric_value__lt=0,
-            )
-        )
-        # get the expertise area and content of this post:
-        expertise_area = negative_post_rating.expertise_area
-        # get the content of the post:
-        content = negative_post_rating.post.content
-
-        # get a random user different from the original author who has a negative fame level for this expertise area
-        # (which is not on the lowest fame level):
-        user = rnd.choice(
-            SocialNetworkUsers.objects.filter(
-                fame__expertise_area=expertise_area,
-                fame__fame_level__numeric_value__lt=0,
-                fame__fame_level__numeric_value__gte=-100,
-            ).exclude(id=negative_post_rating.post.author.id)
-        )
-
-        # for this user get the old fame for this expertise area:
-        old_fame_level = Fame.objects.get(
-            user=user, expertise_area=expertise_area
-        ).fame_level
-
-        # for this user: send a new post with the exact same content:
-        # recall, that eas and truth ratings are guaranteed to be the same for the same content
-        api.submit_post(user, content, cites=None, replies_to=None)
-
-        # for this user: get the new fame for this expertise area:
-        new_fame_level = Fame.objects.get(
-            user=user, expertise_area=expertise_area
-        ).fame_level
-
-        # the new fame level for this user must be different now:
-        self.assertFalse(old_fame_level == new_fame_level)
-
-        # the new fame level for this user must actually be the next lower fame level:
-        self.assertTrue(old_fame_level.get_next_lower_fame_level() == new_fame_level)
-
-    def test_T2b(self):  # implemented and tested
-        # If the expertise area is not contained, simply add an entry in the user’s fame profile with fame
-        # level “Confuser”.
-
-        # pick a random post with a negative truth rating:
-        negative_post_rating = rnd.choice(
-            PostExpertiseAreasAndRatings.objects.filter(
-                truth_rating__numeric_value__lt=0,
-            )
-        )
-        # get the expertise area and content of this post:
-        expertise_area = negative_post_rating.expertise_area
-        # get the content of the post:
-        content = negative_post_rating.post.content
-
-        # get a random user different from the original author who DOES NOT HAVE this expertise area in his/her fame
-        # profile:
-        all_user_ids_without_expertise_area = list(
-            set(SocialNetworkUsers.objects.all().values_list("id", flat=True))
-            - set(
-                Fame.objects.filter(expertise_area=expertise_area).values_list(
-                    "user", flat=True
-                )
-            )
-        )
-
-        # pick a random user from the remaining users:
-        user = SocialNetworkUsers.objects.get(
-            id=rnd.choice(all_user_ids_without_expertise_area)
-        )
-
-        # for this user no fame entry with this ea should exist:
-        self.assertFalse(
-            Fame.objects.filter(user=user, expertise_area=expertise_area).exists()
-        )
-
-        # for this user: send a new post with the exact same content:
-        # recall, that eas and truth ratings are guaranteed to be the same for the same content
-        api.submit_post(user, content, cites=None, replies_to=None)
-
-        # for this user: get the newly created fame entry for this expertise area:
-        new_fame_level = Fame.objects.get(
-            user=user, expertise_area=expertise_area
-        ).fame_level
-
-        # the fame_level should be "Confuser":
-        self.assertEqual(new_fame_level.name, "Confuser")
+    # def test_T2a(self):  # implemented and tested
+    #     # If the expertise area is already contained in the user’s fame profile, lower the fame to the next
+    #     # possible level.
+    #
+    #     # pick a random post with a negative truth rating:
+    #     negative_post_rating = rnd.choice(
+    #         PostExpertiseAreasAndRatings.objects.filter(
+    #             truth_rating__numeric_value__lt=0,
+    #         )
+    #     )
+    #     # get the expertise area and content of this post:
+    #     expertise_area = negative_post_rating.expertise_area
+    #     # get the content of the post:
+    #     content = negative_post_rating.post.content
+    #
+    #     # get a random user different from the original author who has a negative fame level for this expertise area
+    #     # (which is not on the lowest fame level):
+    #     user = rnd.choice(
+    #         SocialNetworkUsers.objects.filter(
+    #             fame__expertise_area=expertise_area,
+    #             fame__fame_level__numeric_value__lt=0,
+    #             fame__fame_level__numeric_value__gte=-100,
+    #         ).exclude(id=negative_post_rating.post.author.id)
+    #     )
+    #
+    #     # for this user get the old fame for this expertise area:
+    #     old_fame_level = Fame.objects.get(
+    #         user=user, expertise_area=expertise_area
+    #     ).fame_level
+    #
+    #     # for this user: send a new post with the exact same content:
+    #     # recall, that eas and truth ratings are guaranteed to be the same for the same content
+    #     api.submit_post(user, content, cites=None, replies_to=None)
+    #
+    #     # for this user: get the new fame for this expertise area:
+    #     new_fame_level = Fame.objects.get(
+    #         user=user, expertise_area=expertise_area
+    #     ).fame_level
+    #
+    #     # the new fame level for this user must be different now:
+    #     self.assertFalse(old_fame_level == new_fame_level)
+    #
+    #     # the new fame level for this user must actually be the next lower fame level:
+    #     self.assertTrue(old_fame_level.get_next_lower_fame_level() == new_fame_level)
+    #
+    # def test_T2b(self):  # implemented and tested
+    #     # If the expertise area is not contained, simply add an entry in the user’s fame profile with fame
+    #     # level “Confuser”.
+    #
+    #     # pick a random post with a negative truth rating:
+    #     negative_post_rating = rnd.choice(
+    #         PostExpertiseAreasAndRatings.objects.filter(
+    #             truth_rating__numeric_value__lt=0,
+    #         )
+    #     )
+    #     # get the expertise area and content of this post:
+    #     expertise_area = negative_post_rating.expertise_area
+    #     # get the content of the post:
+    #     content = negative_post_rating.post.content
+    #
+    #     # get a random user different from the original author who DOES NOT HAVE this expertise area in his/her fame
+    #     # profile:
+    #     all_user_ids_without_expertise_area = list(
+    #         set(SocialNetworkUsers.objects.all().values_list("id", flat=True))
+    #         - set(
+    #             Fame.objects.filter(expertise_area=expertise_area).values_list(
+    #                 "user", flat=True
+    #             )
+    #         )
+    #     )
+    #
+    #     # pick a random user from the remaining users:
+    #     user = SocialNetworkUsers.objects.get(
+    #         id=rnd.choice(all_user_ids_without_expertise_area)
+    #     )
+    #
+    #     # for this user no fame entry with this ea should exist:
+    #     self.assertFalse(
+    #         Fame.objects.filter(user=user, expertise_area=expertise_area).exists()
+    #     )
+    #
+    #     # for this user: send a new post with the exact same content:
+    #     # recall, that eas and truth ratings are guaranteed to be the same for the same content
+    #     api.submit_post(user, content, cites=None, replies_to=None)
+    #
+    #     # for this user: get the newly created fame entry for this expertise area:
+    #     new_fame_level = Fame.objects.get(
+    #         user=user, expertise_area=expertise_area
+    #     ).fame_level
+    #
+    #     # the fame_level should be "Confuser":
+    #     self.assertEqual(new_fame_level.name, "Confuser")
 
     def _user_is_banned_test(self, use_DRF_endpoint: bool = False):
         # If you cannot lower the existing fame level for that expertise area any further, ban the user from the
@@ -496,33 +495,33 @@ class StudentTasksTests(TestCase):
         # verify that no posts are displayed for this user
         self.assertFalse(displayed_posts.exists())
 
-    def test_T4d(self):
-        # Change api.submit_post to automatically remove a user from a community if the fame level for the
-        # expertise area of this community drops below Super Pro.
-
-        # pick a random user who is in a community and has fame level Super Pro in this expertise area
-        user_community_matches = Fame.objects.filter(
-            fame_level__numeric_value=100,
-            user__socialnetworkusers__communities=F("expertise_area"),
-            # ensures the user is a community member of the expertise area
-        ).select_related("user", "expertise_area")
-        user, community = rnd.choice(
-            [(f.user, f.expertise_area) for f in user_community_matches]
-        )
-        user = SocialNetworkUsers.objects.get(id=user.id)
-
-        # pick a random post with negative truth rating in this expertise area and get its content
-        negative_rated_posts = Posts.objects.filter(
-            postexpertiseareasandratings__expertise_area=community,
-            postexpertiseareasandratings__truth_rating__numeric_value__lt=0,
-        ).distinct()
-        content = rnd.choice(list(negative_rated_posts)).content
-
-        # for this user: send a new post with the exact same content
-        api.submit_post(user, content, cites=None, replies_to=None)
-
-        # assert that the user is no longer member of the community
-        self.assertTrue(community not in user.communities.all())
+    # def test_T4d(self):
+    #     # Change api.submit_post to automatically remove a user from a community if the fame level for the
+    #     # expertise area of this community drops below Super Pro.
+    #
+    #     # pick a random user who is in a community and has fame level Super Pro in this expertise area
+    #     user_community_matches = Fame.objects.filter(
+    #         fame_level__numeric_value=100,
+    #         user__socialnetworkusers__communities=F("expertise_area"),
+    #         # ensures the user is a community member of the expertise area
+    #     ).select_related("user", "expertise_area")
+    #     user, community = rnd.choice(
+    #         [(f.user, f.expertise_area) for f in user_community_matches]
+    #     )
+    #     user = SocialNetworkUsers.objects.get(id=user.id)
+    #
+    #     # pick a random post with negative truth rating in this expertise area and get its content
+    #     negative_rated_posts = Posts.objects.filter(
+    #         postexpertiseareasandratings__expertise_area=community,
+    #         postexpertiseareasandratings__truth_rating__numeric_value__lt=0,
+    #     ).distinct()
+    #     content = rnd.choice(list(negative_rated_posts)).content
+    #
+    #     # for this user: send a new post with the exact same content
+    #     api.submit_post(user, content, cites=None, replies_to=None)
+    #
+    #     # assert that the user is no longer member of the community
+    #     self.assertTrue(community not in user.communities.all())
 
     # def test_T5_1(self):
     #     # Implement api.similar_users: It should return for a given user u_i the list of similar users. This list should

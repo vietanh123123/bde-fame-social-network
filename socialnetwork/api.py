@@ -156,17 +156,16 @@ def submit_post(
         except Fame.DoesNotExist:
             pass
 
-    # T4d: drop the author from any of this post's communities where their fame has
-    # fallen below Super Pro. `.remove()` is a no-op when the user isn't a member.
-    super_pro = FameLevels.objects.get(name="Super Pro").numeric_value
-    for area in _expertise_areas:
-        expertise_area = area["expertise_area"]
-        try:
-            fame = Fame.objects.get(user=user, expertise_area=expertise_area)
-        except Fame.DoesNotExist:
-            continue
-        if fame.fame_level.numeric_value < super_pro:
-            user.communities.remove(expertise_area)
+    # T2 (fame-lowering) goes here. For each of `_expertise_areas` whose truth_rating is
+    # negative, lower that area's Fame to the next level. Right after lowering an area's
+    # fame, wire in the T4 community-removal hook:
+    #
+    #     super_pro = FameLevels.objects.get(name="Super Pro").numeric_value  # fetch once
+    #     ...
+    #     if fame.fame_level.numeric_value < super_pro:
+    #         user.communities.remove(expertise_area)
+    #
+    # `.remove()` is a no-op when the user isn't a member, so it is safe for every area.
 
     post.save()
 
