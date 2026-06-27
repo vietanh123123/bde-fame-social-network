@@ -22,35 +22,45 @@ def timeline(request):
     if 'community_mode' not in request.session:
         request.session['community_mode'] = False
 
+    user = _get_social_network_user(request.user)
+    community_mode = request.session['community_mode']
 
     # get extra URL parameters:
     keyword = request.GET.get("search", "")
     published = request.GET.get("published", True)
     error = request.GET.get("error", None)
 
+    # context shared by both branches: community overview and the mode toggle:
+    common_context = {
+        "error": error,
+        "followers": list(api.follows(user).values_list('id', flat=True)),
+        "community_mode": community_mode,
+        "my_communities": user.communities.all(),
+        "joinable_communities": api.joinable_communities(user),
+    }
+
     # if keyword is not empty, use search method of API:
     if keyword and keyword != "":
         context = {
+            **common_context,
             "posts": PostsSerializer(
                 api.search(keyword, published=published), many=True
             ).data,
             "searchkeyword": keyword,
-            "error": error,
-            "followers": list(api.follows(_get_social_network_user(request.user)).values_list('id', flat=True)),
         }
     else:  # otherwise, use timeline method of API:
 
         context = {
+            **common_context,
             "posts": PostsSerializer(
                 api.timeline(
-                    _get_social_network_user(request.user),
+                    user,
                     published=published,
+                    community_mode=community_mode,
                 ),
                 many=True,
             ).data,
             "searchkeyword": "",
-            "error": error,
-            "followers": list(api.follows(_get_social_network_user(request.user)).values_list('id', flat=True)),
         }
 
     return render(request, "timeline.html", context=context)
@@ -82,7 +92,9 @@ def bullshitters(request):
 @require_http_methods(["POST"])
 @login_required
 def toggle_community_mode(request):
-    raise NotImplementedError("Not implemented yet")
+    request.session["community_mode"] = not request.session.get("community_mode", False)
+    request.session.modified = True
+    return redirect(reverse("sn:timeline"))
 
 @require_http_methods(["POST"])
 @login_required
@@ -98,7 +110,13 @@ def join_community(request):
 @require_http_methods(["POST"])
 @login_required
 def leave_community(request):
-    raise NotImplementedError("Not implemented yet")
+    user = _get_social_network_user(request.user)
+    community = ExpertiseAreas.objects.get(id=request.POST.get("community_id"))
+    if community not in user.communities.all():
+        query = urlencode({"error": "You are not a member of this community."})
+        return redirect(f"{reverse('sn:timeline')}?{query}")
+    api.leave_community(user, community)
+    return redirect(reverse("sn:timeline"))
 
 @require_http_methods(["GET"])
 @login_required
