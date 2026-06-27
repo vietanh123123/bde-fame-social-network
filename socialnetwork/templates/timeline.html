@@ -18,6 +18,63 @@
         </form>
     </div>
     <br>
+
+    {% if error %}
+        <div class="alert alert-danger" style="margin-left: 40px; margin-right: 40px;" data-testid="community_error">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <div class="card" style="margin-bottom: 20px; margin-left: 40px; margin-right: 40px;">
+        <div class="flex-container" style="justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0;">
+                Mode: {% if community_mode %}Community{% else %}Standard{% endif %}
+            </h4>
+            <form action="{% url 'sn:toggle_community_mode' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary" data-testid="toggle_community_mode">
+                    {% if community_mode %}Switch to Standard Mode{% else %}Switch to Community Mode{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <hr>
+
+        <h5>My communities</h5>
+        {% if my_communities %}
+            {% for community in my_communities %}
+                <div class="flex-container" style="justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span><b>{{ community.label }}</b></span>
+                    <form action="{% url 'sn:leave_community' %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="community_id" value="{{ community.id }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" data-testid="leave_community">Leave</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="color:gray;">You are not a member of any community.</p>
+        {% endif %}
+
+        <hr>
+
+        <h5>Communities you may join</h5>
+        {% if joinable_communities %}
+            {% for community in joinable_communities %}
+                <div class="flex-container" style="justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span><b>{{ community.label }}</b></span>
+                    <form action="{% url 'sn:join_community' %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="community_id" value="{{ community.id }}">
+                        <button type="submit" class="btn btn-sm btn-outline-success" data-testid="join_community">Join</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="color:gray;">There are no communities you are eligible to join.</p>
+        {% endif %}
+    </div>
+
     <div class="card" style="margin-bottom: 20px; margin-left: 40px; margin-right: 40px;">
         <form action="/sn/api/posts" method="post">
             {% csrf_token %}

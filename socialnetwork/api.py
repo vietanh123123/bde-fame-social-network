@@ -33,12 +33,15 @@ def timeline(
         # 3. the post contains the community’s expertise area
         # 4. the post is published or the user is the author
         #
-        # Both community_members lookups go through the SAME expertise-area join (they
-        # share one filter() call), so they pin to a single community that the post is
-        # classified as AND that both the user and the post's author belong to.
+        # Both expertise-area lookups share the SAME join (one filter() call), so they pin
+        # to a single community E that the post is classified as. The user's membership is
+        # checked via `user.communities` (i.e. E must be one of the user's communities),
+        # while the author's membership is checked by extending that same join to
+        # community_members. Checking both memberships on the community_members join would
+        # force user == author (a single join row has a single member), which is wrong.
         posts = (
             Posts.objects.filter(
-                Q(expertise_area_and_truth_ratings__community_members=user)
+                Q(expertise_area_and_truth_ratings__in=user.communities.all())
                 & Q(expertise_area_and_truth_ratings__community_members=F("author"))
                 & (Q(published=published) | Q(author=user))
             )
@@ -247,6 +250,15 @@ def join_community(user: SocialNetworkUsers, community: ExpertiseAreas):
 def leave_community(user: SocialNetworkUsers, community: ExpertiseAreas):
     """Leave a specified community."""
     user.communities.remove(community)
+
+
+def joinable_communities(user: SocialNetworkUsers):
+    """Get the expertise areas the user is eligible to join (Super Pro or above) but is not yet a member of."""
+    min_fame = FameLevels.objects.get(name="Super Pro").numeric_value
+    return ExpertiseAreas.objects.filter(
+        fame_of=user,
+        fame__fame_level__numeric_value__gte=min_fame,
+    ).exclude(community_members=user)
 
 
 def similar_users(user: SocialNetworkUsers):
