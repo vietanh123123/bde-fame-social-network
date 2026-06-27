@@ -1,8 +1,11 @@
+from urllib.parse import urlencode
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
+from fame.models import ExpertiseAreas
 from socialnetwork import api
 from socialnetwork.api import _get_social_network_user
 from socialnetwork.models import SocialNetworkUsers
@@ -84,7 +87,13 @@ def toggle_community_mode(request):
 @require_http_methods(["POST"])
 @login_required
 def join_community(request):
-    raise NotImplementedError("Not implemented yet")
+    user = _get_social_network_user(request.user)
+    community = ExpertiseAreas.objects.get(id=request.POST.get("community_id"))
+    if not api.can_join_community(user, community):
+        query = urlencode({"error": "You are not eligible to join this community."})
+        return redirect(f"{reverse('sn:timeline')}?{query}")
+    api.join_community(user, community)
+    return redirect(reverse("sn:timeline"))
 
 @require_http_methods(["POST"])
 @login_required

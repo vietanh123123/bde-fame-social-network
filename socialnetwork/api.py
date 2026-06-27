@@ -1,8 +1,7 @@
-from django.db.models import Q, Exists, OuterRef, When, IntegerField, FloatField, Count, ExpressionWrapper, Case, Value, F, Prefetch
+from django.db.models import F, Q
 
-from fame.models import Fame, FameLevels, FameUsers, ExpertiseAreas
+from fame.models import ExpertiseAreas, Fame, FameLevels
 from socialnetwork.models import Posts, SocialNetworkUsers
-
 
 # general methods independent of html and REST views
 # should be used by REST and html views
@@ -17,7 +16,13 @@ def _get_social_network_user(user) -> SocialNetworkUsers:
     return user
 
 
-def timeline(user: SocialNetworkUsers, start: int = 0, end: int = None, published=True, community_mode=False):
+def timeline(
+    user: SocialNetworkUsers,
+    start: int = 0,
+    end: int = None,
+    published=True,
+    community_mode=False,
+):
     """Get the timeline of the user. Assumes that the user is authenticated."""
 
     if community_mode:
@@ -27,11 +32,19 @@ def timeline(user: SocialNetworkUsers, start: int = 0, end: int = None, publishe
         # 2. the user is a member of the community
         # 3. the post contains the community’s expertise area
         # 4. the post is published or the user is the author
-
-        pass
-        #########################
-        # add your code here
-        #########################
+        #
+        # Both community_members lookups go through the SAME expertise-area join (they
+        # share one filter() call), so they pin to a single community that the post is
+        # classified as AND that both the user and the post's author belong to.
+        posts = (
+            Posts.objects.filter(
+                Q(expertise_area_and_truth_ratings__community_members=user)
+                & Q(expertise_area_and_truth_ratings__community_members=F("author"))
+                & (Q(published=published) | Q(author=user))
+            )
+            .distinct()
+            .order_by("-submitted")
+        )
 
     else:
         # in standard mode, posts of followed users are displayed
@@ -42,7 +55,7 @@ def timeline(user: SocialNetworkUsers, start: int = 0, end: int = None, publishe
     if end is None:
         return posts[start:]
     else:
-        return posts[start:end+1]
+        return posts[start : end + 1]
 
 
 def search(keyword: str, start: int = 0, end: int = None, published=True):
@@ -57,7 +70,7 @@ def search(keyword: str, start: int = 0, end: int = None, published=True):
     if end is None:
         return posts[start:]
     else:
-        return posts[start:end+1]
+        return posts[start : end + 1]
 
 
 def follows(user: SocialNetworkUsers, start: int = 0, end: int = None):
@@ -66,7 +79,7 @@ def follows(user: SocialNetworkUsers, start: int = 0, end: int = None):
     if end is None:
         return _follows[start:]
     else:
-        return _follows[start:end+1]
+        return _follows[start : end + 1]
 
 
 def followers(user: SocialNetworkUsers, start: int = 0, end: int = None):
@@ -75,7 +88,7 @@ def followers(user: SocialNetworkUsers, start: int = 0, end: int = None):
     if end is None:
         return _followers[start:]
     else:
-        return _followers[start:end+1]
+        return _followers[start : end + 1]
 
 
 def follow(user: SocialNetworkUsers, user_to_follow: SocialNetworkUsers):
@@ -126,17 +139,30 @@ def submit_post(
 
     redirect_to_logout = False
 
-
-    for area in _expertise_areas: #using for loop to get a value with key expertise_area from dictionary
+    for area in (
+        _expertise_areas
+    ):  # using for loop to get a value with key expertise_area from dictionary
         expertise_area = area["expertise_area"]
         try:
-            fame_value = Fame.objects.get(user = user, expertise_area = expertise_area) #finding fame of a user in a specific expertise area
-            if fame_value.fame_level.numeric_value <  0:
+            fame_value = Fame.objects.get(
+                user=user, expertise_area=expertise_area
+            )  # finding fame of a user in a specific expertise area
+            if fame_value.fame_level.numeric_value < 0:
                 post.published = False
                 break
         except Fame.DoesNotExist:
             pass
 
+    # T2 (fame-lowering) goes here. For each of `_expertise_areas` whose truth_rating is
+    # negative, lower that area's Fame to the next level. Right after lowering an area's
+    # fame, wire in the T4 community-removal hook:
+    #
+    #     super_pro = FameLevels.objects.get(name="Super Pro").numeric_value  # fetch once
+    #     ...
+    #     if fame.fame_level.numeric_value < super_pro:
+    #         user.communities.remove(expertise_area)
+    #
+    # `.remove()` is a no-op when the user isn't a member, so it is safe for every area.
 
     post.save()
 
@@ -201,27 +227,26 @@ def bullshitters():
     #########################
 
 
-
+def can_join_community(user: SocialNetworkUsers, community: ExpertiseAreas) -> bool:
+    """Whether the user is eligible to join the community, i.e. Super Pro or above in its expertise area."""
+    min_fame = FameLevels.objects.get(name="Super Pro").numeric_value
+    return Fame.objects.filter(
+        user=user,
+        expertise_area=community,
+        fame_level__numeric_value__gte=min_fame,
+    ).exists()
 
 
 def join_community(user: SocialNetworkUsers, community: ExpertiseAreas):
     """Join a specified community. Note that this method does not check whether the user is eligible for joining the
     community.
     """
-    pass
-    #########################
-    # add your code here
-    #########################
-
+    user.communities.add(community)
 
 
 def leave_community(user: SocialNetworkUsers, community: ExpertiseAreas):
     """Leave a specified community."""
-    pass
-    #########################
-    # add your code here
-    #########################
-
+    user.communities.remove(community)
 
 
 def similar_users(user: SocialNetworkUsers):
