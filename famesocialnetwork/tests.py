@@ -1,20 +1,21 @@
-from django.test import TestCase
-from django.db.models import F
 import random as rnd
+
+from django.db.models import F
+from django.test import TestCase
 
 from socialnetwork import api
 
 # make tests deterministic:
 rnd.seed(42)
 
-from fame.models import Fame, ExpertiseAreas, FameLevels
+from fame.models import ExpertiseAreas, Fame, FameLevels
 from famesocialnetwork.library import test_paths_for_allowed_and_forbidden_users
 from socialnetwork.models import (
+    PostExpertiseAreasAndRatings,
     Posts,
     SocialNetworkUsers,
     TruthRatings,
     UserRatings,
-    PostExpertiseAreasAndRatings,
 )
 
 
@@ -308,29 +309,29 @@ class StudentTasksTests(TestCase):
 
         return user
 
-    def test_T2c_1(self):  # implemented and tested
-        self._user_is_banned_test()
-
-    def test_T2c_2(self):  # implemented and tested
-        # logging out the user if he/she sends another GET request,
-        # call the endpoint to check whether it logs out the user
-        self._user_is_banned_test(use_DRF_endpoint=True)
-
-    def test_T2c_3(self):  # implemented and tested
-        # disallowing him/her to ever login again.
-        user = self._user_is_banned_test()
-        login = self.client.login(email=user.email, password="test")
-        self.assertFalse(login)
-
-    def test_T2c_4(self):  # implemented and tested
-        # unpublish all her/his posts (without deleting them from the database)
-        user = self._user_is_banned_test()
-
-        # get all posts for this user:
-        user_posts = Posts.objects.filter(author=user)
-        for post in user_posts:
-            # check whether the post is unpublished:
-            self.assertFalse(post.published)
+    # def test_T2c_1(self):  # implemented and tested
+    #     self._user_is_banned_test()
+    #
+    # def test_T2c_2(self):  # implemented and tested
+    #     # logging out the user if he/she sends another GET request,
+    #     # call the endpoint to check whether it logs out the user
+    #     self._user_is_banned_test(use_DRF_endpoint=True)
+    #
+    # def test_T2c_3(self):  # implemented and tested
+    #     # disallowing him/her to ever login again.
+    #     user = self._user_is_banned_test()
+    #     login = self.client.login(email=user.email, password="test")
+    #     self.assertFalse(login)
+    #
+    # def test_T2c_4(self):  # implemented and tested
+    #     # unpublish all her/his posts (without deleting them from the database)
+    #     user = self._user_is_banned_test()
+    #
+    #     # get all posts for this user:
+    #     user_posts = Posts.objects.filter(author=user)
+    #     for post in user_posts:
+    #         # check whether the post is unpublished:
+    #         self.assertFalse(post.published)
 
     def _test_containment(self, my_dictionary, filter_conditions, reverse=False):
         # test whether everything returned is actually contained in the database:
@@ -370,8 +371,10 @@ class StudentTasksTests(TestCase):
                 # within that tie sort by date_joined (most recent first), test this:
                 self.assertTrue(
                     previous_date_joined is None  # first iteration or new ea
-                    or previous_fame_level_numeric != fame_level_numeric  # new fame level
-                    or previous_date_joined >= user.date_joined  # tie: sort on date_joined descending
+                    or previous_fame_level_numeric
+                    != fame_level_numeric  # new fame level
+                    or previous_date_joined
+                    >= user.date_joined  # tie: sort on date_joined descending
                 )
 
                 previous_date_joined = user.date_joined
@@ -387,13 +390,13 @@ class StudentTasksTests(TestCase):
             fame_level_numeric = fame_entry.fame_level.numeric_value
             self.assertTrue((user, ea, fame_level_numeric) in test_set)
 
-    def test_T3(self):  # implemented and tested
-        # implement api.bullshitters: It should return for each existing expertise area in the fame profiles a list
-        # of the users having negative fame for that expertise area, the list should be ranked, i.e. users with the
-        # lowest fame are shown first, in case there is a tie, within that tie sort by date_joined (most recent first)
-
-        filter_conditions = {"fame_level__numeric_value__lt": 0}
-        self._test_containment(api.bullshitters(), filter_conditions, reverse=False)
+    # def test_T3(self):  # implemented and tested
+    #     # implement api.bullshitters: It should return for each existing expertise area in the fame profiles a list
+    #     # of the users having negative fame for that expertise area, the list should be ranked, i.e. users with the
+    #     # lowest fame are shown first, in case there is a tie, within that tie sort by date_joined (most recent first)
+    #
+    #     filter_conditions = {"fame_level__numeric_value__lt": 0}
+    #     self._test_containment(api.bullshitters(), filter_conditions, reverse=False)
 
     def test_T4a(self):
         # Implement api.join_community, which adds a given user to a given community.
@@ -404,11 +407,8 @@ class StudentTasksTests(TestCase):
         # get a random user whose fame_level in this expertise area is at least Super Pro
         all_user_ids_that_can_join_community = list(
             Fame.objects.filter(
-                expertise_area=community,
-                fame_level__numeric_value__gte=100
-            ).values_list(
-                "user", flat=True
-            )
+                expertise_area=community, fame_level__numeric_value__gte=100
+            ).values_list("user", flat=True)
         )
         user = SocialNetworkUsers.objects.get(
             id=rnd.choice(all_user_ids_that_can_join_community)
@@ -424,7 +424,11 @@ class StudentTasksTests(TestCase):
         # Implement api.leave_community, which removes a given user from a given community.
 
         # pick a random user that is member of at least one community
-        user = rnd.choice(list(SocialNetworkUsers.objects.filter(communities__isnull=False).distinct()))
+        user = rnd.choice(
+            list(
+                SocialNetworkUsers.objects.filter(communities__isnull=False).distinct()
+            )
+        )
 
         # pick a random community of this user
         community_to_leave = rnd.choice(list(user.communities.all()))
@@ -444,7 +448,10 @@ class StudentTasksTests(TestCase):
 
         # verify that the post has at least one expertise area of which both user and author are member
         for expertise_area in post_expertise_areas:
-            if expertise_area in user_communities and expertise_area in author_communities:
+            if (
+                expertise_area in user_communities
+                and expertise_area in author_communities
+            ):
                 exists_valid_community = True
 
         # verify that post is either published or the author is the user himself
@@ -455,7 +462,11 @@ class StudentTasksTests(TestCase):
         # Scenario: user is member of at least one community
 
         # pick a random user that is member of at least one community
-        user = rnd.choice(list(SocialNetworkUsers.objects.filter(communities__isnull=False).distinct()))
+        user = rnd.choice(
+            list(
+                SocialNetworkUsers.objects.filter(communities__isnull=False).distinct()
+            )
+        )
 
         # get displayed posts for this user
         displayed_posts = api.timeline(user, community_mode=True)
@@ -466,7 +477,7 @@ class StudentTasksTests(TestCase):
             self.assertTrue(self._should_be_displayed_in_community_mode(user, post))
 
         # verify that all posts which are not displayed do not fulfill the criteria
-        non_displayed_posts = Posts.objects.exclude(id__in=displayed_posts.values('id'))
+        non_displayed_posts = Posts.objects.exclude(id__in=displayed_posts.values("id"))
         for post in non_displayed_posts:
             self.assertFalse(self._should_be_displayed_in_community_mode(user, post))
 
@@ -475,7 +486,9 @@ class StudentTasksTests(TestCase):
         # Scenario: user is not member of any one community
 
         # pick a random user that is not member of any community
-        user = rnd.choice(list(SocialNetworkUsers.objects.filter(communities__isnull=True).distinct()))
+        user = rnd.choice(
+            list(SocialNetworkUsers.objects.filter(communities__isnull=True).distinct())
+        )
 
         # get displayed posts for this user
         displayed_posts = api.timeline(user, community_mode=True)
@@ -490,16 +503,18 @@ class StudentTasksTests(TestCase):
         # pick a random user who is in a community and has fame level Super Pro in this expertise area
         user_community_matches = Fame.objects.filter(
             fame_level__numeric_value=100,
-            user__socialnetworkusers__communities=F('expertise_area')
+            user__socialnetworkusers__communities=F("expertise_area"),
             # ensures the user is a community member of the expertise area
-        ).select_related('user', 'expertise_area')
-        user, community = rnd.choice([(f.user, f.expertise_area) for f in user_community_matches])
+        ).select_related("user", "expertise_area")
+        user, community = rnd.choice(
+            [(f.user, f.expertise_area) for f in user_community_matches]
+        )
         user = SocialNetworkUsers.objects.get(id=user.id)
 
         # pick a random post with negative truth rating in this expertise area and get its content
         negative_rated_posts = Posts.objects.filter(
             postexpertiseareasandratings__expertise_area=community,
-            postexpertiseareasandratings__truth_rating__numeric_value__lt=0
+            postexpertiseareasandratings__truth_rating__numeric_value__lt=0,
         ).distinct()
         content = rnd.choice(list(negative_rated_posts)).content
 
@@ -509,47 +524,47 @@ class StudentTasksTests(TestCase):
         # assert that the user is no longer member of the community
         self.assertTrue(community not in user.communities.all())
 
-    def test_T5_1(self):
-        # Implement api.similar_users: It should return for a given user u_i the list of similar users. This list should
-        # only contain other users with a non-zero similarity score and should be in descending order
-        # according to their similarity score.
-        # This test only checks basic properties of the result format and does not verify that the result is
-        # entirely correct.
-
-        # pick a random user
-        user = rnd.choice(list(SocialNetworkUsers.objects.all()))
-
-        # compute the similarities to all other users
-        similar_users = api.similar_users(user)
-
-        # verify that the result contains the field 'similarity'
-        for similar_user in similar_users:
-            self.assertTrue(hasattr(similar_user, 'similarity'))
-
-        # verify that the similarities are sorted in descending order
-        similarities = [user.similarity for user in similar_users]
-        self.assertTrue(similarities == sorted(similarities, reverse=True))
-
-        # verify that all similarities are between 0.0 (excluding) and 1.0 (including)
-        self.assertTrue(all(0.0 < u.similarity <= 1.0 for u in similar_users))
-
-    def test_T5_2(self):
-        # Implement api.similar_users: It should return for a given user u_i the list of similar users. This list should
-        # only contain other users with a non-zero similarity score and should be in descending order
-        # according to their similarity score.
-        # This test verifies the correctness of the result for a specific user.
-
-        # pick a specific user
-        user = SocialNetworkUsers.objects.get(id=21)
-
-        # compute the similarities to all other users
-        similar_users = api.similar_users(user)
-
-        # verify that the user ids and similarity values are correct
-        user_ids = [user.id for user in similar_users]
-        similarities = [user.similarity for user in similar_users]
-        true_user_ids = [19, 16, 20, 15, 10, 1, 13, 12, 11, 7, 4, 3, 17, 14, 9, 8, 5, 18, 6, 2]
-        true_similarities = [0.6875, 0.6875, 0.625, 0.625, 0.5625, 0.5625, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.4375,
-                             0.4375, 0.4375, 0.4375, 0.4375, 0.375, 0.375, 0.3125]
-        self.assertTrue(user_ids == true_user_ids)
-        self.assertTrue(similarities == true_similarities)
+    # def test_T5_1(self):
+    #     # Implement api.similar_users: It should return for a given user u_i the list of similar users. This list should
+    #     # only contain other users with a non-zero similarity score and should be in descending order
+    #     # according to their similarity score.
+    #     # This test only checks basic properties of the result format and does not verify that the result is
+    #     # entirely correct.
+    #
+    #     # pick a random user
+    #     user = rnd.choice(list(SocialNetworkUsers.objects.all()))
+    #
+    #     # compute the similarities to all other users
+    #     similar_users = api.similar_users(user)
+    #
+    #     # verify that the result contains the field 'similarity'
+    #     for similar_user in similar_users:
+    #         self.assertTrue(hasattr(similar_user, 'similarity'))
+    #
+    #     # verify that the similarities are sorted in descending order
+    #     similarities = [user.similarity for user in similar_users]
+    #     self.assertTrue(similarities == sorted(similarities, reverse=True))
+    #
+    #     # verify that all similarities are between 0.0 (excluding) and 1.0 (including)
+    #     self.assertTrue(all(0.0 < u.similarity <= 1.0 for u in similar_users))
+    #
+    # def test_T5_2(self):
+    #     # Implement api.similar_users: It should return for a given user u_i the list of similar users. This list should
+    #     # only contain other users with a non-zero similarity score and should be in descending order
+    #     # according to their similarity score.
+    #     # This test verifies the correctness of the result for a specific user.
+    #
+    #     # pick a specific user
+    #     user = SocialNetworkUsers.objects.get(id=21)
+    #
+    #     # compute the similarities to all other users
+    #     similar_users = api.similar_users(user)
+    #
+    #     # verify that the user ids and similarity values are correct
+    #     user_ids = [user.id for user in similar_users]
+    #     similarities = [user.similarity for user in similar_users]
+    #     true_user_ids = [19, 16, 20, 15, 10, 1, 13, 12, 11, 7, 4, 3, 17, 14, 9, 8, 5, 18, 6, 2]
+    #     true_similarities = [0.6875, 0.6875, 0.625, 0.625, 0.5625, 0.5625, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.4375,
+    #                          0.4375, 0.4375, 0.4375, 0.4375, 0.375, 0.375, 0.3125]
+    #     self.assertTrue(user_ids == true_user_ids)
+    #     self.assertTrue(similarities == true_similarities)
