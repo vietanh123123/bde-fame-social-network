@@ -153,7 +153,7 @@ class StudentTasksTests(TestCase):
     # change api.submit_post to adjust the fame profile of the user if he/she submits a post with a negative
     # truth rating
     # def test_T2a(self):  # implemented and tested
-    #     # If the expertise area is already contained in the user’s fame profile, lower the fame to the next
+    #     # If the expertise area is already contained in the user's fame profile, lower the fame to the next
     #     # possible level.
     #
     #     # pick a random post with a negative truth rating:
@@ -198,8 +198,8 @@ class StudentTasksTests(TestCase):
     #     self.assertTrue(old_fame_level.get_next_lower_fame_level() == new_fame_level)
     #
     # def test_T2b(self):  # implemented and tested
-    #     # If the expertise area is not contained, simply add an entry in the user’s fame profile with fame
-    #     # level “Confuser”.
+    #     # If the expertise area is not contained, simply add an entry in the user's fame profile with fame
+    #     # level "Confuser".
     #
     #     # pick a random post with a negative truth rating:
     #     negative_post_rating = rnd.choice(
@@ -389,13 +389,13 @@ class StudentTasksTests(TestCase):
             fame_level_numeric = fame_entry.fame_level.numeric_value
             self.assertTrue((user, ea, fame_level_numeric) in test_set)
 
-    # def test_T3(self):  # implemented and tested
-    #     # implement api.bullshitters: It should return for each existing expertise area in the fame profiles a list
-    #     # of the users having negative fame for that expertise area, the list should be ranked, i.e. users with the
-    #     # lowest fame are shown first, in case there is a tie, within that tie sort by date_joined (most recent first)
-    #
-    #     filter_conditions = {"fame_level__numeric_value__lt": 0}
-    #     self._test_containment(api.bullshitters(), filter_conditions, reverse=False)
+    def test_T3(self):  # implemented and tested
+        # implement api.bullshitters: It should return for each existing expertise area in the fame profiles a list
+        # of the users having negative fame for that expertise area, the list should be ranked, i.e. users with the
+        # lowest fame are shown first, in case there is a tie, within that tie sort by date_joined (most recent first)
+
+        filter_conditions = {"fame_level__numeric_value__lt": 0}
+        self._test_containment(api.bullshitters(), filter_conditions, reverse=False)
 
     def test_T4a(self):
         # Implement api.join_community, which adds a given user to a given community.

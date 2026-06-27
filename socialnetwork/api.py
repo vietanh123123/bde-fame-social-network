@@ -1,6 +1,7 @@
-from django.db.models import F, Q
+from django.db.models import F, Q, Sum, Case, When, Value, IntegerField, FloatField, ExpressionWrapper
+from django.db.models.functions import Cast
 
-from fame.models import ExpertiseAreas, Fame, FameLevels
+from fame.models import ExpertiseAreas, Fame, FameLevels, FameUsers
 from socialnetwork.models import Posts, SocialNetworkUsers
 
 # general methods independent of html and REST views
@@ -142,6 +143,7 @@ def submit_post(
 
     redirect_to_logout = False
 
+    # T1: check if any expertise area has negative fame for this user
     for area in (
         _expertise_areas
     ):  # using for loop to get a value with key expertise_area from dictionary
@@ -166,6 +168,7 @@ def submit_post(
     #         user.communities.remove(expertise_area)
     #
     # `.remove()` is a no-op when the user isn't a member, so it is safe for every area.
+
 
     post.save()
 
@@ -224,10 +227,27 @@ def bullshitters():
     users with the lowest fame are shown first, in case there is a tie, within that tie sort by date_joined
     (most recent first). Note that expertise areas with no expert may be omitted.
     """
-    pass
-    #########################
-    # add your code here
-    #########################
+    result = {}
+
+    # get all fame entries where the fame level is negative, sorted properly
+    negative_fame_entries = Fame.objects.filter(
+        fame_level__numeric_value__lt=0
+    ).select_related('user', 'expertise_area', 'fame_level').order_by(
+        'fame_level__numeric_value',   # lowest fame first
+        '-user__date_joined'           # most recent first for ties
+    )
+
+    # group by expertise area
+    for entry in negative_fame_entries:
+        ea = entry.expertise_area
+        if ea not in result:
+            result[ea] = []
+        result[ea].append({
+            "user": entry.user,
+            "fame_level_numeric": entry.fame_level.numeric_value,
+        })
+
+    return result
 
 
 def can_join_community(user: SocialNetworkUsers, community: ExpertiseAreas) -> bool:
@@ -265,3 +285,4 @@ def similar_users(user: SocialNetworkUsers):
     """Compute the similarity of user with all other users. The method returns a QuerySet of FameUsers annotated
     with an additional field 'similarity'. Sort the result in descending order according to 'similarity', in case
     there is a tie, within that tie sort by date_joined (most recent first)"""
+    pass
