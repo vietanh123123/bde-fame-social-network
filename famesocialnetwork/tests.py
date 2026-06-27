@@ -523,47 +523,47 @@ class StudentTasksTests(TestCase):
     #     # assert that the user is no longer member of the community
     #     self.assertTrue(community not in user.communities.all())
 
-    # def test_T5_1(self):
-    #     # Implement api.similar_users: It should return for a given user u_i the list of similar users. This list should
-    #     # only contain other users with a non-zero similarity score and should be in descending order
-    #     # according to their similarity score.
-    #     # This test only checks basic properties of the result format and does not verify that the result is
-    #     # entirely correct.
-    #
-    #     # pick a random user
-    #     user = rnd.choice(list(SocialNetworkUsers.objects.all()))
-    #
-    #     # compute the similarities to all other users
-    #     similar_users = api.similar_users(user)
-    #
-    #     # verify that the result contains the field 'similarity'
-    #     for similar_user in similar_users:
-    #         self.assertTrue(hasattr(similar_user, 'similarity'))
-    #
-    #     # verify that the similarities are sorted in descending order
-    #     similarities = [user.similarity for user in similar_users]
-    #     self.assertTrue(similarities == sorted(similarities, reverse=True))
-    #
-    #     # verify that all similarities are between 0.0 (excluding) and 1.0 (including)
-    #     self.assertTrue(all(0.0 < u.similarity <= 1.0 for u in similar_users))
-    #
-    # def test_T5_2(self):
-    #     # Implement api.similar_users: It should return for a given user u_i the list of similar users. This list should
-    #     # only contain other users with a non-zero similarity score and should be in descending order
-    #     # according to their similarity score.
-    #     # This test verifies the correctness of the result for a specific user.
-    #
-    #     # pick a specific user
-    #     user = SocialNetworkUsers.objects.get(id=21)
-    #
-    #     # compute the similarities to all other users
-    #     similar_users = api.similar_users(user)
-    #
-    #     # verify that the user ids and similarity values are correct
-    #     user_ids = [user.id for user in similar_users]
-    #     similarities = [user.similarity for user in similar_users]
-    #     true_user_ids = [19, 16, 20, 15, 10, 1, 13, 12, 11, 7, 4, 3, 17, 14, 9, 8, 5, 18, 6, 2]
-    #     true_similarities = [0.6875, 0.6875, 0.625, 0.625, 0.5625, 0.5625, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.4375,
-    #                          0.4375, 0.4375, 0.4375, 0.4375, 0.375, 0.375, 0.3125]
-    #     self.assertTrue(user_ids == true_user_ids)
-    #     self.assertTrue(similarities == true_similarities)
+    def test_T5_1(self):
+        # Implement api.similar_users: It should return for a given user u_i the list of similar users. This list should
+        # only contain other users with a non-zero similarity score and should be in descending order
+        # according to their similarity score.
+        # This test only checks basic properties of the result format and does not verify that the result is
+        # entirely correct.
+
+        # pick a random user
+        user = rnd.choice(list(SocialNetworkUsers.objects.all()))
+
+        # compute the similarities to all other users
+        similar_users = api.similar_users(user)
+
+        # verify that the result contains the field 'similarity'
+        for similar_user in similar_users:
+            self.assertTrue(hasattr(similar_user, 'similarity'))
+
+        # verify that the similarities are sorted in descending order
+        similarities = [user.similarity for user in similar_users]
+        self.assertTrue(similarities == sorted(similarities, reverse=True))
+
+        # verify that all similarities are between 0.0 (excluding) and 1.0 (including)
+        self.assertTrue(all(0.0 < u.similarity <= 1.0 for u in similar_users))
+
+    def test_T5_2(self):
+        # Implement api.similar_users: It should return for a given user u_i the list of similar users. This list should
+        # only contain other users with a non-zero similarity score and should be in descending order
+        # according to their similarity score.
+        # This test verifies the correctness of the result for a specific user.
+
+        # pick a specific user
+        user = SocialNetworkUsers.objects.get(id=21)
+
+        # compute the similarities to all other users
+        similar_users = api.similar_users(user)
+
+        # verify that the user ids and similarity values are correct
+        user_ids = [user.id for user in similar_users]
+        similarities = [user.similarity for user in similar_users]
+        true_user_ids = [19, 16, 20, 15, 10, 1, 13, 12, 11, 7, 4, 3, 17, 14, 9, 8, 5, 18, 6, 2]
+        true_similarities = [0.6875, 0.6875, 0.625, 0.625, 0.5625, 0.5625, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.4375,
+                             0.4375, 0.4375, 0.4375, 0.4375, 0.375, 0.375, 0.3125]
+        self.assertTrue(user_ids == true_user_ids)
+        self.assertTrue(similarities == true_similarities)

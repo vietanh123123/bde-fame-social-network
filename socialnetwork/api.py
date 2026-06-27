@@ -285,4 +285,47 @@ def similar_users(user: SocialNetworkUsers):
     """Compute the similarity of user with all other users. The method returns a QuerySet of FameUsers annotated
     with an additional field 'similarity'. Sort the result in descending order according to 'similarity', in case
     there is a tie, within that tie sort by date_joined (most recent first)"""
-    pass
+
+    # get all fame entries for this user
+    user_fames = Fame.objects.filter(user=user).select_related('fame_level')
+    user_fame_list = [(f.expertise_area_id, f.fame_level.numeric_value) for f in user_fames]
+    num_areas = len(user_fame_list)
+
+    # if user has no expertise areas, return empty queryset
+    if num_areas == 0:
+        return FameUsers.objects.none()
+
+    # for each of the user's expertise areas, build a When condition that checks
+    # if another user has a fame entry in the same area within +/- 100
+    conditions = []
+    for ea_id, fame_val in user_fame_list:
+        conditions.append(
+            When(
+                fame__expertise_area_id=ea_id,
+                fame__fame_level__numeric_value__gte=fame_val - 100,
+                fame__fame_level__numeric_value__lte=fame_val + 100,
+                then=Value(1)
+            )
+        )
+
+    # count how many of the user's expertise areas match for each other user
+    match_count = Sum(
+        Case(*conditions, default=Value(0), output_field=IntegerField())
+    )
+
+    # annotate each user with similarity = match_count / num_areas
+    result = (
+        FameUsers.objects
+        .exclude(id=user.id)
+        .annotate(
+            _match_count=match_count,
+            similarity=ExpressionWrapper(
+                Cast('_match_count', FloatField()) / Value(float(num_areas)),
+                output_field=FloatField()
+            )
+        )
+        .filter(_match_count__gt=0)
+        .order_by('-similarity', '-date_joined')
+    )
+
+    return result
