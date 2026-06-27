@@ -144,30 +144,44 @@ def submit_post(
     redirect_to_logout = False
 
     # T1: check if any expertise area has negative fame for this user
-    for area in (
-        _expertise_areas
-    ):  # using for loop to get a value with key expertise_area from dictionary
+    for area in _expertise_areas:  # using for loop to get a value with key expertise_area from dictionary
         expertise_area = area["expertise_area"]
         try:
-            fame_value = Fame.objects.get(
+            fame = Fame.objects.get(
                 user=user, expertise_area=expertise_area
             )  # finding fame of a user in a specific expertise area
-            if fame_value.fame_level.numeric_value < 0:
+            if fame.fame_level.numeric_value < 0:
                 post.published = False
                 break
         except Fame.DoesNotExist:
             pass
 
-    # T2 (fame-lowering) goes here. For each of `_expertise_areas` whose truth_rating is
-    # negative, lower that area's Fame to the next level. Right after lowering an area's
-    # fame, wire in the T4 community-removal hook:
-    #
-    #     super_pro = FameLevels.objects.get(name="Super Pro").numeric_value  # fetch once
-    #     ...
-    #     if fame.fame_level.numeric_value < super_pro:
-    #         user.communities.remove(expertise_area)
-    #
-    # `.remove()` is a no-op when the user isn't a member, so it is safe for every area.
+    super_pro = FameLevels.objects.get(name="Super Pro").numeric_value
+    for area in _expertise_areas:
+        expertise_area = area["expertise_area"]
+        truth_rating = area["truth_rating"]
+        if truth_rating is not None and truth_rating.numeric_value < 0:
+            try:
+                fame = Fame.objects.get(user=user, expertise_area = expertise_area)
+                fame.fame_level = fame.fame_level.get_next_lower_fame_level()
+                fame.save()
+                if fame.fame_level.numeric_value < super_pro:
+                    user.communities.remove(expertise_area)
+            except Fame.DoesNotExist:
+                confuser = FameLevels.objects.get(name="Confuser")
+
+                Fame.objects.create(
+                    user=user,
+                    expertise_area=expertise_area,
+                    fame_level=confuser,)
+
+            except ValueError:
+                user.is_active = False
+                user.save()
+
+                Posts.objects.filter(author = user).update(published=False)
+                redirect_to_logout = True
+
 
 
     post.save()
