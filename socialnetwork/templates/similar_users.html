@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Similar Users{% endblock %}
+
+{% block body %}
+
+    <br>
+    <h3 style="margin-left: 40px">Users Similar to You</h3>
+    <br>
+
+    <div class="card" style="margin-bottom: 20px; margin-left: 40px; margin-right: 40px;">
+        <div class="card-body">
+            {% if similar_users %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Similarity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in similar_users %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <a href="/fame/html/fame?userid={{ u.id }}">
+                                        {{ u.first_name }} {{ u.last_name }}
+                                    </a>
+                                    <span style="color:gray">({{ u.email }})</span>
+                                </td>
+                                <td>
+                                    {{ u.similarity|floatformat:4 }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No similar users found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <br><br>
+
+{% endblock %}

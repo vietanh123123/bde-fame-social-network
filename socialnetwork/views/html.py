@@ -5,7 +5,8 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
-from fame.models import ExpertiseAreas
+from fame.models import ExpertiseAreas, Fame
+from fame.serializers import FameSerializer
 from socialnetwork import api
 from socialnetwork.api import _get_social_network_user
 from socialnetwork.models import SocialNetworkUsers
@@ -87,7 +88,12 @@ def unfollow(request):
 @require_http_methods(["GET"])
 @login_required
 def bullshitters(request):
-    raise NotImplementedError("Not implemented yet")
+    # call the api to get the bullshitters dictionary
+    bs = api.bullshitters()
+    context = {
+        "bullshitters": bs,
+    }
+    return render(request, "bullshitters.html", context=context)
 
 @require_http_methods(["POST"])
 @login_required
@@ -121,4 +127,9 @@ def leave_community(request):
 @require_http_methods(["GET"])
 @login_required
 def similar_users(request):
-    raise NotImplementedError("Not implemented yet")
+    user = _get_social_network_user(request.user)
+    users = api.similar_users(user)
+    context = {
+        "similar_users": users,
+    }
+    return render(request, "similar_users.html", context=context)
