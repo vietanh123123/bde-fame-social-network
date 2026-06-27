@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Bullshitters{% endblock %}
+
+{% block body %}
+
+    <br>
+    <h3 style="margin-left: 40px">Bullshitters by Expertise Area</h3>
+    <br>
+
+    {% for expertise_area, users in bullshitters.items %}
+        <div class="card" style="margin-bottom: 20px; margin-left: 40px; margin-right: 40px;">
+            <div class="card-header">
+                <b>{{ expertise_area.label }}</b>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Fame Level (numeric)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in users %}
+                            <tr>
+                                <td>
+                                    <a href="/fame/html/fame?userid={{ entry.user.id }}">
+                                        {{ entry.user.first_name }} {{ entry.user.last_name }}
+                                    </a>
+                                    <span style="color:gray">({{ entry.user.email }})</span>
+                                </td>
+                                <td>
+                                    <span style="color: red">{{ entry.fame_level_numeric }}</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% empty %}
+        <p style="margin-left: 40px">No bullshitters found.</p>
+    {% endfor %}
+
+    <br><br>
+
+{% endblock %}
