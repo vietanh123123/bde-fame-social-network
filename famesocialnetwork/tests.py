@@ -1,7 +1,7 @@
 import random as rnd
 
 from django.test import TestCase
-
+from django.db.models import F
 from socialnetwork import api
 
 # make tests deterministic:
