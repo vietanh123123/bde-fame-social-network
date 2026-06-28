@@ -25,69 +25,210 @@
         </div>
     {% endif %}
 
-    <div class="card" style="margin-bottom: 20px; margin-left: 40px; margin-right: 40px;">
-        <div class="flex-container" style="justify-content: space-between; align-items: center;">
-            <h4 style="margin: 0;">
-                Mode: {% if community_mode %}Community{% else %}Standard{% endif %}
-            </h4>
-            <form action="{% url 'sn:toggle_community_mode' %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-primary" data-testid="toggle_community_mode">
-                    {% if community_mode %}Switch to Standard Mode{% else %}Switch to Community Mode{% endif %}
-                </button>
-            </form>
+<div class="card shadow-sm mb-4" style="margin-left:40px; margin-right:40px;">
+
+    <div class="card-header d-flex justify-content-between align-items-center">
+
+        <h4 class="mb-0">
+            <i class="fa-solid fa-globe"></i>
+            Mode
+            {% if community_mode %}
+                <span class="badge bg-primary">Community</span>
+            {% else %}
+                <span class="badge bg-secondary">Standard</span>
+            {% endif %}
+        </h4>
+
+        <form action="{% url 'sn:toggle_community_mode' %}" method="post">
+            {% csrf_token %}
+            <button
+                    type="submit"
+                    class="btn btn-primary"
+                    data-testid="toggle_community_mode">
+
+                <i class="fa-solid fa-right-left"></i>
+
+                {% if community_mode %}
+                    Standard Mode
+                {% else %}
+                    Community Mode
+                {% endif %}
+
+            </button>
+        </form>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <h5 class="mb-3">
+                    <i class="fa-solid fa-users"></i>
+                    My communities
+                </h5>
+
+                {% if my_communities %}
+
+                    <ul class="list-group">
+
+                        {% for community in my_communities %}
+
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                                <strong>{{ community.label }}</strong>
+
+                                <form action="{% url 'sn:leave_community' %}" method="post">
+
+                                    {% csrf_token %}
+
+                                    <input
+                                            type="hidden"
+                                            name="community_id"
+                                            value="{{ community.id }}">
+
+                                    <button
+                                            class="btn btn-outline-danger btn-sm"
+                                            data-testid="leave_community">
+
+                                        Leave
+
+                                    </button>
+
+                                </form>
+
+                            </li>
+
+                        {% endfor %}
+
+                    </ul>
+
+                {% else %}
+
+                    <p class="text-muted">
+
+                        You are not a member of any community.
+
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+            <div class="col-md-6">
+
+                <h5 class="mb-3">
+
+                    <i class="fa-solid fa-compass"></i>
+
+                    Communities you may join
+
+                </h5>
+
+                {% if joinable_communities %}
+
+                    <ul class="list-group">
+
+                        {% for community in joinable_communities %}
+
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                                <strong>{{ community.label }}</strong>
+
+                                <form action="{% url 'sn:join_community' %}" method="post">
+
+                                    {% csrf_token %}
+
+                                    <input
+                                            type="hidden"
+                                            name="community_id"
+                                            value="{{ community.id }}">
+
+                                    <button
+                                            class="btn btn-outline-success btn-sm"
+                                            data-testid="join_community">
+
+                                        Join
+
+                                    </button>
+
+                                </form>
+
+                            </li>
+
+                        {% endfor %}
+
+                    </ul>
+
+                {% else %}
+
+                    <p class="text-muted">
+
+                        There are no communities you are eligible to join.
+
+                    </p>
+
+                {% endif %}
+
+            </div>
+
         </div>
 
-        <hr>
-
-        <h5>My communities</h5>
-        {% if my_communities %}
-            {% for community in my_communities %}
-                <div class="flex-container" style="justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span><b>{{ community.label }}</b></span>
-                    <form action="{% url 'sn:leave_community' %}" method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="community_id" value="{{ community.id }}">
-                        <button type="submit" class="btn btn-sm btn-outline-danger" data-testid="leave_community">Leave</button>
-                    </form>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p style="color:gray;">You are not a member of any community.</p>
-        {% endif %}
-
-        <hr>
-
-        <h5>Communities you may join</h5>
-        {% if joinable_communities %}
-            {% for community in joinable_communities %}
-                <div class="flex-container" style="justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span><b>{{ community.label }}</b></span>
-                    <form action="{% url 'sn:join_community' %}" method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="community_id" value="{{ community.id }}">
-                        <button type="submit" class="btn btn-sm btn-outline-success" data-testid="join_community">Join</button>
-                    </form>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p style="color:gray;">There are no communities you are eligible to join.</p>
-        {% endif %}
     </div>
 
-    <div class="card" style="margin-bottom: 20px; margin-left: 40px; margin-right: 40px;">
+</div>
+
+<div class="card shadow-sm mb-4" style="margin-left:40px; margin-right:40px;">
+
+    <div class="card-header">
+        <h5 class="mb-0">Create post</h5>
+    </div>
+
+    <div class="card-body">
+
         <form action="/sn/api/posts" method="post">
+
             {% csrf_token %}
-            <textarea class="form-control" rows="5" name="text"></textarea>
-            <button type="submit" class="btn btn-secondary">Post</button>
+
+            <textarea
+                    class="form-control mb-3"
+                    rows="5"
+                    name="text"
+                    placeholder="What's on your mind?"></textarea>
+
+            <div class="text-end">
+                <button
+                        type="submit"
+                        class="btn btn-primary">
+
+                    Post
+
+                </button>
+            </div>
+
         </form>
+
     </div>
-    <br>
-    <br>
-    <h3 style="margin-left: 40px">Timeline</h3>
+
+</div>
+<br>
+
+<div style="margin-left:40px; margin-right:40px;">
+
+    <h3 class="mb-4">
+        Timeline
+    </h3>
+
+</div>
     {% for post in posts %}
-        <div class="card"
-             style="margin-bottom: 20px; margin-left: 40px; margin-right: 40px; background-color: {% if post.published %}white{% else %}mistyrose{% endif %};">
+<div class="card shadow-sm"
+     style="margin-bottom:25px;
+            margin-left:40px;
+            margin-right:40px;
+            border-radius:12px;
+            background-color: {% if post.published %}white{% else %}mistyrose{% endif %};">
             <div class="flex-container">
                 <b><a href="/fame/html/fame?userid={{ post.author.id }}">{{ post.author.name|highlight:searchkeyword }}
                 </b></a>&nbsp;
