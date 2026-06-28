@@ -308,29 +308,29 @@ class StudentTasksTests(TestCase):
 
         return user
 
-    # def test_T2c_1(self):  # implemented and tested
-    #     self._user_is_banned_test()
-    #
-    # def test_T2c_2(self):  # implemented and tested
-    #     # logging out the user if he/she sends another GET request,
-    #     # call the endpoint to check whether it logs out the user
-    #     self._user_is_banned_test(use_DRF_endpoint=True)
-    #
-    # def test_T2c_3(self):  # implemented and tested
-    #     # disallowing him/her to ever login again.
-    #     user = self._user_is_banned_test()
-    #     login = self.client.login(email=user.email, password="test")
-    #     self.assertFalse(login)
-    #
-    # def test_T2c_4(self):  # implemented and tested
-    #     # unpublish all her/his posts (without deleting them from the database)
-    #     user = self._user_is_banned_test()
-    #
-    #     # get all posts for this user:
-    #     user_posts = Posts.objects.filter(author=user)
-    #     for post in user_posts:
-    #         # check whether the post is unpublished:
-    #         self.assertFalse(post.published)
+    def test_T2c_1(self):  # implemented and tested
+        self._user_is_banned_test()
+
+    def test_T2c_2(self):  # implemented and tested
+        # logging out the user if he/she sends another GET request,
+        # call the endpoint to check whether it logs out the user
+        self._user_is_banned_test(use_DRF_endpoint=True)
+
+    def test_T2c_3(self):  # implemented and tested
+        # disallowing him/her to ever login again.
+        user = self._user_is_banned_test()
+        login = self.client.login(email=user.email, password="test")
+        self.assertFalse(login)
+
+    def test_T2c_4(self):  # implemented and tested
+        # unpublish all her/his posts (without deleting them from the database)
+        user = self._user_is_banned_test()
+
+        # get all posts for this user:
+        user_posts = Posts.objects.filter(author=user)
+        for post in user_posts:
+            # check whether the post is unpublished:
+            self.assertFalse(post.published)
 
     def _test_containment(self, my_dictionary, filter_conditions, reverse=False):
         # test whether everything returned is actually contained in the database:
@@ -495,33 +495,33 @@ class StudentTasksTests(TestCase):
         # verify that no posts are displayed for this user
         self.assertFalse(displayed_posts.exists())
 
-    # def test_T4d(self):
-    #     # Change api.submit_post to automatically remove a user from a community if the fame level for the
-    #     # expertise area of this community drops below Super Pro.
-    #
-    #     # pick a random user who is in a community and has fame level Super Pro in this expertise area
-    #     user_community_matches = Fame.objects.filter(
-    #         fame_level__numeric_value=100,
-    #         user__socialnetworkusers__communities=F("expertise_area"),
-    #         # ensures the user is a community member of the expertise area
-    #     ).select_related("user", "expertise_area")
-    #     user, community = rnd.choice(
-    #         [(f.user, f.expertise_area) for f in user_community_matches]
-    #     )
-    #     user = SocialNetworkUsers.objects.get(id=user.id)
-    #
-    #     # pick a random post with negative truth rating in this expertise area and get its content
-    #     negative_rated_posts = Posts.objects.filter(
-    #         postexpertiseareasandratings__expertise_area=community,
-    #         postexpertiseareasandratings__truth_rating__numeric_value__lt=0,
-    #     ).distinct()
-    #     content = rnd.choice(list(negative_rated_posts)).content
-    #
-    #     # for this user: send a new post with the exact same content
-    #     api.submit_post(user, content, cites=None, replies_to=None)
-    #
-    #     # assert that the user is no longer member of the community
-    #     self.assertTrue(community not in user.communities.all())
+    def test_T4d(self):
+        # Change api.submit_post to automatically remove a user from a community if the fame level for the
+        # expertise area of this community drops below Super Pro.
+
+        # pick a random user who is in a community and has fame level Super Pro in this expertise area
+        user_community_matches = Fame.objects.filter(
+            fame_level__numeric_value=100,
+            user__socialnetworkusers__communities=F("expertise_area"),
+            # ensures the user is a community member of the expertise area
+        ).select_related("user", "expertise_area")
+        user, community = rnd.choice(
+            [(f.user, f.expertise_area) for f in user_community_matches]
+        )
+        user = SocialNetworkUsers.objects.get(id=user.id)
+
+        # pick a random post with negative truth rating in this expertise area and get its content
+        negative_rated_posts = Posts.objects.filter(
+            postexpertiseareasandratings__expertise_area=community,
+            postexpertiseareasandratings__truth_rating__numeric_value__lt=0,
+        ).distinct()
+        content = rnd.choice(list(negative_rated_posts)).content
+
+        # for this user: send a new post with the exact same content
+        api.submit_post(user, content, cites=None, replies_to=None)
+
+        # assert that the user is no longer member of the community
+        self.assertTrue(community not in user.communities.all())
 
     def test_T5_1(self):
         # Implement api.similar_users: It should return for a given user u_i the list of similar users. This list should
